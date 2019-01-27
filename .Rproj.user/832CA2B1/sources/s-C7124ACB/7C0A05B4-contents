@@ -1,0 +1,23 @@
+library(dplyr)
+library(stringr)
+
+length(res)
+
+f="./data/SANAE 56_XBT/SANAE 56_Leg1_XBT/X030608N02.txt"
+for (f in files){
+res <- read.csv(f,header=FALSE,sep="\t",stringsAsFactors = FALSE)
+res <- unlist(res[1:10,],use.names = FALSE)
+lat <- res[grepl('latitude',res,ignore.case=TRUE)] 
+lat <- strsplit(lat,"=")[[1]][2]
+lat <- gsub(",","",lat)
+lat <- str_trim(lat,side="both") #removes white space in front
+lat <- strsplit(lat," ")
+degres
+grepl('longitude',res,ignore.case=TRUE)
+grepl('Date',res)
+grepl('Time',res)
+
+read.table(f,sep="\t",skip=9) %>% head()
+
+}
+

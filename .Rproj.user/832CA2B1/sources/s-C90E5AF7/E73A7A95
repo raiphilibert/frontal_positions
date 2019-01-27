@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1548619241179.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3502289419",
+    "id" : "E73A7A95",
+    "lastKnownWriteTime" : 1548628429,
+    "last_content_update" : 1548628429818,
+    "path" : "~/Dropbox/oceanography_mac/postdoc/SANAE56/XBT_data/r/calc_frontal_positions.R",
+    "project_path" : "r/calc_frontal_positions.R",
+    "properties" : {
+        "cursorPosition" : "89,29",
+        "scrollLine" : "68",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,117 @@
+#PREAMBLE ------
+rm(list = ls())
+library(ncdf4)
+library(viridis)
+#source('C:/Users/raissa.philibert/Dropbox/oceanography_mac/coding/R-coding/functions/Rai_package.R')
+library(ggplot2)
+library(maps)
+#setwd('C:/Users/raissa.philibert/Dropbox/oceanography_mac/postdoc/papers/bioassay_summers/scripts/')
+presentation = FALSE
+if (presentation ==TRUE){
+  figfol <- "/Users/raissaphilibert/Dropbox/oceanography_mac/postdoc/presentations/lunch_time_serminar_spet2015/"
+} else {
+  figfol <- "../figures/"
+}
+
+files <-  list.files(path="./data/temperature/", pattern="sst", full.names = FALSE)
+print(files)
+mp <- NULL
+mapWorld <- borders("world", colour="gray50", fill="gray50") # create a layer of borders
+mp <- ggplot() +   mapWorld
+out <-NULL
+surf_front_exp <- data.frame()
+front_names <- c("STF","SAF","PF")
+front_sst_min <-c(10.6,6.8,2.5)
+front_sst_max <- c(17.9,10.3,4.1)
+for (i in 1:length(files))
+{
+  data <- read.csv(paste("./data/temperature/",files[i],sep=""),sep="\t")
+names(data) <- c("lon","lat","temp")
+out[[i]] <- mp+ geom_point(data=data,aes(x=lon,
+                                             y=lat,
+                                             colour=temp),size=3)+
+  scale_x_continuous(name='Longitude (degrees E)')+
+  scale_y_continuous(name='Latitude (degrees N)')+
+  scale_colour_gradientn(colours=viridis(256))+ggtitle(paste(files[i]))+
+  coord_cartesian(ylim=c(-80,-25),xlim=c(-20,20))
+file =substr(files[i],1,nchar(files[i])-3)
+filename = paste("./figures/",file,"pdf",sep="")
+for (j in 1:length(front_names))
+{
+    front_ind = which(
+      data$temp< (front_sst_max[j]) &
+        data$temp > (front_sst_min[j]) )
+      
+  front_pos <- cbind(paste(file),front_names[j],data[front_ind,])
+  
+  surf_front_exp <- rbind(surf_front_exp,front_pos[front_pos$lat==min(front_pos$lat),],
+                     front_pos[front_pos$lat==max(front_pos$lat),])
+}
+ggsave(filename = filename, out[[i]])
+}
+
+write.csv(surf_front_exp,file="./data/surface_front_expression.csv")
+
+##NC
+#PREAMBLE ------
+rm(list = ls())
+#source('/Users/raissaphilibert/Dropbox/oceanography_mac/coding/R-coding/functions/Rai_package.R')
+#setwd('/Users/raissaphilibert/Dropbox/oceanography_mac/postdoc/papers/bioassay_summers/scripts')
+presentation = FALSE
+if (presentation ==TRUE){
+  figfol <- "/Users/raissaphilibert/Dropbox/oceanography_mac/postdoc/presentations/lunch_time_serminar_spet2015/"
+} else {
+  figfol <- "./figures/"
+}
+
+front_exp <- data.frame()
+folder <- list.files(path="./data/temperature/",pattern="xbt",full.names=FALSE)
+for (j in 1:length(folder))
+{
+files <-  list.files(path=paste("../data/temperature/",folder[j],"/",sep=""), pattern=("nc"), full.names = FALSE)
+if (length(files)==0){ files<-list.files(path=paste("../data/temperature/",folder[j],"/",sep=""), pattern=("NDC"), full.names = FALSE)}else{}
+mp <- NULL
+mapWorld <- borders("world", colour="gray50", fill="gray50") # create a layer of borders
+mp <- ggplot() +   mapWorld
+out <-NULL
+
+dat_all <- data.frame()
+for (i in 1:length(files))
+{
+d <-nc_open(paste("../data/temperature/",folder[j],"/",files[i],sep=""))
+print(d)
+lon <- ncvar_get(d,"longitude")
+nlon <- dim(lon)
+head(lon)
+lat <- ncvar_get(d,"latitude")
+nlat <- dim(lat)
+head(lat)
+date <- ncvar_get(d,"woce_date")
+time <- ncvar_get(d,"woce_time")
+tunits <- ncatt_get(d,"time","units")
+temp <- ncvar_get(d,"procTemperature")
+depth <- ncvar_get(d,"depth")
+dat <- cbind(date,time,lon,lat,temp,depth)
+dat_all <- rbind(dat_all,dat)
+}
+#interp_plot(dat_all$lat,dat_all$depth,dat_all$temp,"Temperature")
+dat_200m <- dat_all[round(dat_all$depth)>195 & round(dat_all$depth)<205,]
+
+front_names <- c("STF","SAF","PF")
+front_axial_t <-c(10,6,2)
+for   (i in 1:length(front_names))
+{
+ind <- which(dat_200m$temp<front_axial_t[i]+0.5 & dat_200m$temp>front_axial_t[i]-0.5)
+dat_front <- dat_200m[ind,]
+lats <- unique(dat_front$lat)
+temp <- dat_front$temp
+depth <- dat_front$depth
+lon <- dat_front$lon
+lat <- dat_front$lat
+front_pos <- aggregate(cbind(temp,depth),list(lon=lon,lat=lat),mean)
+front_pos_name<- cbind(front_pos,front_names[i],folder[j])
+front_exp <- rbind(front_exp,front_pos_name)
+}
+
+}
+
