@@ -50,21 +50,22 @@ for(f in files){
   xbtData <- bind_rows(xbtData,values)
 }
 
-ggplot(data=xbtData) + geom_point(aes(x=latitude,y=-Depth.,color=Temp, group=latitude)) 
+ggplot(data=xbtData) + geom_point(aes(x=latitude,y=-depth,color=temp, group=latitude)) 
 write.table(file='./data/xbtDatacompiled.txt',x=xbtData,sep='\t',row.names=FALSE)
 
 ##INTERPOLATE DATA
-fld <- with(xbtData, interp(x = latitude, y = depth, z = temp))
+fld <- with(xbtData, interp(x = latitude, y = depth, z = temp,extrap=TRUE))
 xbtInterp <- as.data.frame(interp2xyz(fld))  # the xy.est parameter (data.frame)
+
 names(xbtInterp) <- c('latitude','depth','temp')
 
 
-front_names <- c("STF","SAF","PF")
-front_axial_t <-c(10,6,2)
+front_names <- c("STF","SAF","PF","SB")
+front_axial_t <-c(10,6,2,1.51)
 front_exp <- NULL
-
+axial_depth <- c(200,200,200,350)
 for   (i in 1:length(front_names)){  
-  datAxial <- xbtData[round(xbtData$depth)>195 & round(xbtData$depth)<205,]
+  datAxial <- xbtData[round(xbtData$depth)>(axial_depth[i]-5) & round(xbtData$depth)<(axial_depth[i]+5),]
   ind <- which(datAxial$temp<front_axial_t[i]+0.5 & datAxial$temp>front_axial_t[i]-0.5)
   dat_front <- datAxial[ind,]
   lats <- unique(dat_front$lat)
@@ -78,13 +79,14 @@ for   (i in 1:length(front_names)){
               summarise(temp=mean(temp),depth=mean(depth)) %>% mutate(
                 front_name = front_names[i]
               )
-  closestVal <- which(abs(front_axial_t[i]-front_pos$depth)==min(abs(front_axial_t[i]-front_pos$depth)))
+  closestVal <- which(abs(front_axial_t[i]-front_pos$temp)==min(abs(front_axial_t[i]-front_pos$temp)))
   front_pos = front_pos[closestVal,]
   front_exp <- rbind(front_exp,front_pos)
 }
 
+
 ggplot(xbtInterp, aes(x=latitude, y=depth, z=temp)) + geom_raster(aes(fill=temp),interpolate = TRUE)  +
-  scale_x_reverse() + scale_y_reverse() + geom_vline(data=front_exp,aes(xintercept=lat)) + 
+  scale_x_reverse() + scale_y_reverse() + geom_vline(data=front_exp2,aes(xintercept=lat)) + 
   scale_fill_gradientn(colours=viridis(256))
 
 ##Print front_exp to get data
